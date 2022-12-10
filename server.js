@@ -1,6 +1,18 @@
 require("dotenv").config();
 var sqlite3 = require("sqlite3").verbose();
 
+const express = require("express");
+const app = express();
+const port = 3000;
+
+app.get("/", (req, res) => {
+  res.send("Hello World!");
+});
+
+app.listen(port, () => {
+  console.log(`Example app listening at http://localhost:${port}`);
+});
+
 // open the database
 let db = new sqlite3.Database("./database.db", (err) => {
   if (err) {
@@ -163,7 +175,11 @@ const sundayMessage = async () => {
   };
 
   const rows = await func();
-  const message = `المركز الأول: ${rows[0].name} \n المركز الثاني: ${rows[1].name} \n المركز الثالث: ${rows[2].name} \n المركز الرابع: ${rows[3].name}`;
+  const message = `المركز الأول: ${rows[0]?.name ?? "-"} \n المركز الثاني: ${
+    rows[1]?.name ?? "-"
+  } \n المركز الثالث: ${rows[2]?.name ?? "-"} \n المركز الرابع: ${
+    rows[3]?.name ?? "-"
+  }`;
 
   sendMessageToGenral(message);
 };
@@ -204,12 +220,12 @@ const noTmTillAlert = async () => {
   return;
 };
 
-// run the sundayMessage function every sunday at 6:00 am
-cron.schedule("0 6 * * 0", sundayMessage);
+// run the sundayMessage function every sunday at 6:00 am at saudi arabia time
+cron.schedule("0 4 * * 0", sundayMessage);
 // run the morningMessage function every day at 6:00 am
-cron.schedule("0 6 * * *", morningMessage);
+cron.schedule("0 4 * * *", morningMessage);
 // run the noTmTillAlert function every day at 5:00 pm
-cron.schedule("0 17 * * *", noTmTillAlert);
+cron.schedule("0 15 * * *", noTmTillAlert);
 
 const sendMessageToGenral = (message) => {
   const channel = client.channels.cache.find(
