@@ -59,9 +59,10 @@ client.once("ready", async () => {
 
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
-
+  console.log("new message");
   if (message.content === "تم") {
     let author = message.author;
+    console.log(`tm ${author.username}`);
     const authorObject = {
       name: author.username,
       id: author.id,
@@ -175,10 +176,15 @@ const sundayMessage = async () => {
   };
 
   const rows = await func();
-  const message = `المركز الأول: ${rows[0]?.name ?? "-"} \n المركز الثاني: ${
-    rows[1]?.name ?? "-"
-  } \n المركز الثالث: ${rows[2]?.name ?? "-"} \n المركز الرابع: ${
-    rows[3]?.name ?? "-"
+  // output the top 4 rows, with a default value of "-" if there is no row in that position, display the name of the user and the number of messages they sent
+  const message = `المركز الأول: ${
+    rows[0] ? rows[0].name : "-" + " " + rows[0] ? rows[0].count : "-" + "\n"
+  }المركز الثاني: ${
+    rows[1] ? rows[1].name : "-" + " " + rows[1] ? rows[1].count : "-" + "\n"
+  }المركز الثالث: ${
+    rows[2] ? rows[2].name : "-" + " " + rows[2] ? rows[2].count : "-" + "\n"
+  }المركز الرابع: ${
+    rows[3] ? rows[3].name : "-" + " " + rows[3] ? rows[3].count : "-" + "\n"
   }`;
 
   sendMessageToGenral(message);
