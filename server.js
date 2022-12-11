@@ -58,11 +58,9 @@ client.once("ready", async () => {
 });
 
 client.on("messageCreate", async (message) => {
-  if (message.author.bot) return;
-  console.log("new message");
+  // if (message.author.bot) return;
   if (message.content === "تم") {
     let author = message.author;
-    console.log(`tm ${author.username}`);
     const authorObject = {
       name: author.username,
       id: author.id,
@@ -70,25 +68,25 @@ client.on("messageCreate", async (message) => {
     };
 
     // get user from database
-    let lastUserRecordPromise = async () => {
+    const lastUserRecordPromise = async () => {
+      // get last message from the user from the database and return it
       return new Promise((resolve, reject) => {
         db.get(
-          // get last message from the user
-          "SELECT * FROM tm WHERE id = ? ORDER BY time DESC limit 1",
+          "SELECT * FROM tm WHERE id = ? ORDER BY time DESC LIMIT 1",
           [authorObject.id],
           (err, row) => {
+            console.log("test");
             if (err) {
               reject("err");
               return console.error(err.message);
             }
-            if (row) {
-              resolve(row);
-              return row;
-            }
+            resolve(row);
+            return row;
           }
         );
       });
     };
+
     let lastUserRecord;
     try {
       lastUserRecord = await lastUserRecordPromise();
@@ -143,6 +141,9 @@ client.on("messageCreate", async (message) => {
       .writeRecords([authorObject]) // returns a promise
       .then(() => {
         console.log("...Done");
+      })
+      .catch((err) => {
+        console.log(err);
       });
     const encourageMessage = ["ذيبان", "وحش", "مدير كبير", "بطططل", "اسطورة"];
     const encourageEmoji = ["🔥", "💪", "👍"];
@@ -157,37 +158,29 @@ client.on("messageCreate", async (message) => {
 
 const sundayMessage = async () => {
   // send a message to the group chat with the id with the most rows in the past week
-  const func = async () => {
-    return new Promise((resolve, reject) => {
-      db.get(
-        "SELECT id, name, COUNT(*) AS count FROM tm WHERE time > datetime('now', '-6 days') GROUP BY id ORDER BY count DESC",
-        (err, row) => {
-          if (err) {
-            reject("err");
-            return console.error(err.message);
-          }
-          if (row) {
-            resolve(row);
-            return row;
-          }
-        }
-      );
-    });
-  };
+  db.get(
+    "SELECT id, name, COUNT(*) AS count FROM tm WHERE time > datetime('now', '-6 days') GROUP BY id ORDER BY count DESC",
+    (err, row) => {
+      if (err) {
+        reject("err");
+        return console.error(err.message);
+      }
+      if (row) {
+        // output the top 4 rows, with a default value of "-" if there is no row in that position, display the name of the user and the number of messages they sent
+        const message = `المركز الأول: ${
+          row[0] ? row[0].name : "-" + " " + row[0] ? row[0].count : "-" + "\n"
+        }المركز الثاني: ${
+          row[1] ? row[1].name : "-" + " " + row[1] ? row[1].count : "-" + "\n"
+        }المركز الثالث: ${
+          row[2] ? row[2].name : "-" + " " + row[2] ? row[2].count : "-" + "\n"
+        }المركز الرابع: ${
+          row[3] ? row[3].name : "-" + " " + row[3] ? row[3].count : "-" + "\n"
+        }`;
 
-  const rows = await func();
-  // output the top 4 rows, with a default value of "-" if there is no row in that position, display the name of the user and the number of messages they sent
-  const message = `المركز الأول: ${
-    rows[0] ? rows[0].name : "-" + " " + rows[0] ? rows[0].count : "-" + "\n"
-  }المركز الثاني: ${
-    rows[1] ? rows[1].name : "-" + " " + rows[1] ? rows[1].count : "-" + "\n"
-  }المركز الثالث: ${
-    rows[2] ? rows[2].name : "-" + " " + rows[2] ? rows[2].count : "-" + "\n"
-  }المركز الرابع: ${
-    rows[3] ? rows[3].name : "-" + " " + rows[3] ? rows[3].count : "-" + "\n"
-  }`;
-
-  sendMessageToGenral(message);
+        sendMessageToGenral(message);
+      }
+    }
+  );
 };
 
 // at 6:00 am every day, send a message to the group chat that says "صباح الجد والإجتهاد"
@@ -199,31 +192,21 @@ const morningMessage = async () => {
 
 const noTmTillAlert = async () => {
   // if there are no records in the database from the past 12 hours then send a message to the group chat
-  const func = async () => {
-    return new Promise((resolve, reject) => {
-      db.get(
-        "SELECT * FROM tm WHERE time > datetime('now', '-12 hours')",
-        (err, row) => {
-          if (err) {
-            reject("err");
-            return console.error(err.message);
-          }
-          if (row) {
-            resolve(row);
-            return row;
-          }
+  return db.get(
+    "SELECT * FROM tm WHERE time > datetime('now', '-12 hours')",
+    (err, row) => {
+      if (err) {
+        reject("err");
+        return console.error(err.message);
+      }
+      if (row) {
+        if (row.length === 0) {
+          // send a message to the group chat
+          sendMessageToGenral("وين التمّات يا شباب");
         }
-      );
-    });
-  };
-
-  const rows = await func();
-  // if there are no rows
-  if (rows.length === 0) {
-    // send a message to the group chat
-    sendMessageToGenral("وين التمّات يا شباب");
-  }
-  return;
+      }
+    }
+  );
 };
 
 // run the sundayMessage function every sunday at 6:00 am at saudi arabia time

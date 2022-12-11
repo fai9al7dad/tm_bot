@@ -1,4 +1,4 @@
-version: '3.4'
+version: "3.4"
 
 services:
   tmbot:
@@ -7,6 +7,6 @@ services:
       context: .
       dockerfile: ./Dockerfile
     environment:
-      NODE_ENV: production
+      DISCORD_TOKEN: ${DISCORD_TOKEN}
     ports:
       - 3000:3000
